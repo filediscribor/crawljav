@@ -99,7 +99,7 @@ def download_page(url):
     return r.text
 
 
-def get_video(link, text):
+def get_video(link, text, series):
     '''
     获取当前页面的图片,并保存
     '''
@@ -114,14 +114,16 @@ def get_video(link, text):
     print(soup)
     video_list = soup.find_all('video')  # 找到界面所有视频标签
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"}
-    create_dir('video/{}'.format(text))
+    create_dir('series/{}/video/'.format(series))
     for i in video_list:
         print(i)
         vid_link = i.find('source').get('src')  # 拿到视频的具体 url
-        download_from_url(vid_link, vid_link[vid_link.rfind('/') + 1:])
+        download_from_url(vid_link, "series/{series}/video/{video}".format(series=series, video=text) + vid_link[
+                                                                                                        vid_link.rfind(
+                                                                                                            '/') + 1:])
 
 
-def get_video_list(link, text):
+def get_video_list(link, series):
     '''
     获取当前页面的视频地址,并保存
     '''
@@ -129,17 +131,16 @@ def get_video_list(link, text):
     link = BASE_URL + link
     html = download_page(link)  # 下载界面
     soup = BeautifulSoup(html, 'html.parser')
-    vid_list = soup.find("body").find('div', class_='panel-body').find_all('a',
-                                                                           href=re.compile("/video/"))  # 找到界面所有子页面链接
+    vid_list = soup.find("body").find_all('a', href=re.compile("/video/"))  # 找到界面所有子页面链接
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"}
-    create_dir('series/{}'.format(text))
+    create_dir('series/{}'.format(series))
     has_next = True
+    # TODO 还没有判断是否有下一页
     for i in vid_list:
-        vid_link = ""
         vid_link = BASE_URL + i["href"]  # 拿到视频的具体 url
         text = i.text
         print(vid_link)
-        get_video(vid_link, text)
+        get_video(vid_link, text, series)
 
 
 def create_dir(name):
@@ -152,17 +153,15 @@ def execute(url):
     page_html = download_page(url)
     print(page_html)
     soup = BeautifulSoup(page_html, 'html.parser')
-    series_list = soup.find('body').find("div", class_='col-md-10').find_all('a', href=re.compile(
+    series_list = soup.find('body').find_all('a', href=re.compile(
         "/series/*/?"))  # 找到界面所有子页面链接
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print(series_list)
     for i in series_list:
         print(i)
-        vid_link = i["href"]  # 拿到视频的具体 url
-        print(vid_link)
+        series_link = i["href"]  # 拿到视频的具体 url
+        print(series_link)
         text = i.text
         print(text)
-        get_video_list(vid_link, text)
+        get_video_list(series_link, text)
 
     # get_video("http://www.jav321.com/video/mimk00022","tetee")
 
